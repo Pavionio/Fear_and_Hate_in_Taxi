@@ -10,7 +10,8 @@ import json
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from prophet import Prophet
-from sklearn.metrics import mean_absolute_error,mean_absolute_percentage_error
+from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
+
 
 def geo_anomalies(data: pd.DataFrame) -> None:
     df_for_pickup = pd.read_csv('/content/gdrive/MyDrive/intensive/Project/taxi_zones.csv')
@@ -218,7 +219,7 @@ def Catch_Anomalies(data: pd.DataFrame, search_geo_anomalies=False, show_small_g
                     search_parameter_anomalies=True):
     """
           Функция для выявления аномалий в данных поездок.
-
+          data - pd.DataFrame - датасет с данными
           search_geo_anomalies -  добавляет колонку, где отмечает поездки, которые находятся вне Нью-Йорка и рисует большую карту Нью-Йорка  (не рекоммендуется использовать на больших датасетах)
           - необходимы колонки:
           pickup_lagitude
