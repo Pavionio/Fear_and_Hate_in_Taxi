@@ -14,9 +14,8 @@ from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 
 
 def geo_anomalies(data: pd.DataFrame) -> None:
-    df_for_pickup = pd.read_csv('/content/gdrive/MyDrive/intensive/Project/taxi_zones.csv')
-    df_for_dropoff = pd.read_csv(
-        '/content/gdrive/MyDrive/intensive/Project/taxi_zones.csv')  # update with the great help of Pavel Fadeev
+    df_for_pickup = pd.read_csv('datasets/taxi_zones.csv')
+    # df_for_dropoff = pd.read_csv('datasets/taxi_zones.csv')
 
     polygon_for_pickup = gpd.GeoDataFrame(geometry=shapely.wkt.loads(df_for_pickup.the_geom))
     # polygon_for_dropoff = gpd.GeoDataFrame(geometry=shapely.wkt.loads(df_for_dropoff.the_geom))
@@ -44,7 +43,7 @@ def geo_anomalies(data: pd.DataFrame) -> None:
 
     coords = pd.merge(longitudes, latitudes, on=['id', 'type'])
 
-    with open('/content/gdrive/MyDrive/intensive/Project/NYC Taxi Zones.geojson') as f:
+    with open('datasets/NYC Taxi Zones.geojson') as f:
         taxi_zones = json.load(f)
 
     fig = px.scatter_mapbox(coords, lat='latitude', lon='longitude', hover_name='type')
@@ -80,7 +79,7 @@ def show_geo_map(data: pd.DataFrame) -> None:
     plt.show()
 
 
-def iso_forest_trip_count_anomalies(data: pd.DataFrame) -> None:
+def iso_forest_trip_count_anomalies(data: pd.DataFrame) -> pd.DataFrame:
     data = data.sort_values(by=['pickup_datetime'])
     cols = data.columns
     data['ds'] = pd.to_datetime(data['pickup_datetime'].str.slice(stop=10))
@@ -170,7 +169,7 @@ def get_distance(p1, p2):
     return distance
 
 
-def prophet_trip_count_anomalies(data: pd.DataFrame, num_of_periods: int) -> None:
+def prophet_trip_count_anomalies(data: pd.DataFrame) -> pd.DataFrame:
     data = data.sort_values(by=['pickup_datetime'])
     cols = data.columns
     data['ds'] = pd.to_datetime(data['pickup_datetime'].str.slice(stop=10))
@@ -214,20 +213,22 @@ def prophet_trip_count_anomalies(data: pd.DataFrame, num_of_periods: int) -> Non
 
 
 def Catch_Anomalies(data: pd.DataFrame, search_geo_anomalies=False, show_small_geo_map=False,
-                    search_count_anomalies_by_iso=True, \
-                    search_count_anomalies_by_prophet=True, num_of_periods=30, search_nlo_anomalies=False,
+                    search_count_anomalies_by_iso=True,
+                    search_count_anomalies_by_prophet=True, search_nlo_anomalies=False,
                     search_parameter_anomalies=True):
     """
           Функция для выявления аномалий в данных поездок.
           data - pd.DataFrame - датасет с данными
-          search_geo_anomalies -  добавляет колонку, где отмечает поездки, которые находятся вне Нью-Йорка и рисует большую карту Нью-Йорка  (не рекоммендуется использовать на больших датасетах)
+          search_geo_anomalies -  добавляет колонку, где отмечает поездки, которые находятся вне Нью-Йорка и рисует большую карту Нью-Йорка  (не рекомендуется использовать на больших датасетах)
+          По умолчанию -  False
           - необходимы колонки:
           pickup_lagitude
           pickup_longitude
           dropoff_longitude
           dropoff_lagitude
 
-          show_small_geo_map - рисует координаты поездок на карте Америки (не рекоммендуется использовать на больших датасетах)
+          show_small_geo_map - рисует координаты поездок на карте Америки (не рекомендуется использовать на больших датасетах)
+          По умолчанию -  False
           - необходимы колонки:
           pickup_lagitude
           pickup_longitude
@@ -235,26 +236,27 @@ def Catch_Anomalies(data: pd.DataFrame, search_geo_anomalies=False, show_small_g
           dropoff_lagitude
 
           search_count_anomalies_by_iso - возвращает аномалии в количестве поездок по дням используя isolation forest
+          По умолчанию -  True
           - необходимы колонки:
            pickup_datetime
 
-          search_count_anomalies_by_prophet - возвращает аномалии в количестве поездок по дням используя prohpet (num_of_periods - количество дней которые prophet предскажет на графике)
+          search_count_anomalies_by_prophet - возвращает аномалии в количестве поездок по дням используя prophet
+          По умолчанию -  True
           - необходимы колонки:
            pickup_datetime
 
-          search_nlo_anomalies -  добавляет колонку аномалий, которые находит LocalOutlierFactor и рисует график (не рекоммендуется использовать на больших датасетах)
+          search_nlo_anomalies -  добавляет колонку аномалий, которые находит LocalOutlierFactor и рисует график (не рекомендуется использовать на больших датасетах)
+          По умолчанию -  False
           - необходимы колонки:
            trip_duration
            distance
 
           search_parameter_anomalies - ищет логически невозможные значения
           - необходима хотя бы одна колонка из следующих:
+          По умолчанию -  True
           trip_duration
           distance
           passenger_count
-
-
-
     """
 
     day_anomalies_iso = None
@@ -270,7 +272,7 @@ def Catch_Anomalies(data: pd.DataFrame, search_geo_anomalies=False, show_small_g
         day_anomalies_iso = iso_forest_trip_count_anomalies(data)
 
     if 'pickup_datetime' in data.columns and search_count_anomalies_by_prophet:
-        day_anomalies_prophet = prophet_trip_count_anomalies(data, num_of_periods)
+        day_anomalies_prophet = prophet_trip_count_anomalies(data)
 
     if 'distance' and 'trip_duration' in data.columns and search_nlo_anomalies:
         trip_nlo_anomalies(data)
